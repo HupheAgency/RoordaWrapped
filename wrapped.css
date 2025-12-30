@@ -1,0 +1,678 @@
+/* =========================================================
+   ROORDA WRAPPED — CLEAN CSS (READY)
+   BG: dissolve only
+   FG (.anim): flies up with per-element --exitY (set by JS)
+   Slide 1: geo shapes + orbit ring + infinite mountain belt
+========================================================= */
+
+/* =========================
+   1) RESET / BASE
+========================= */
+
+html,
+body {
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --dur: 2000ms; /* must match JS duration */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    Arial, sans-serif;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* =========================
+   2) DECK / SCENES
+========================= */
+
+#deck {
+  position: fixed; /* ✅ altijd viewport */
+  inset: 0; /* top/right/bottom/left = 0 */
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transform: none;
+  transition: none;
+}
+
+.scene.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* =========================
+   3) BACKGROUND (DISSOLVE ONLY)
+========================= */
+
+.wrapped-bg {
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+
+  filter: blur(40px);
+  opacity: 0.95;
+
+  animation: floatBg 18s ease-in-out infinite alternate;
+  transition: opacity var(--dur) ease;
+
+  /* fallback bg (will be overridden per slide) */
+  background: radial-gradient(circle at 10% 20%, #39ffb6 0, transparent 45%),
+    radial-gradient(circle at 90% 30%, #ff9e2c 0, transparent 45%),
+    radial-gradient(circle at 20% 90%, #35a8ff 0, transparent 45%),
+    radial-gradient(circle at 80% 80%, #b235ff 0, transparent 45%);
+}
+
+/* entering starts invisible, then fades in when .is-entering is removed */
+.scene.is-entering .wrapped-bg {
+  opacity: 0;
+}
+
+/* leaving fades out */
+.scene.is-leaving .wrapped-bg {
+  opacity: 0;
+}
+
+@keyframes floatBg {
+  0% {
+    transform: translate3d(-5%, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(5%, -3%, 0) scale(1.1);
+  }
+  100% {
+    transform: translate3d(0, 3%, 0) scale(1.05);
+  }
+}
+
+/* =========================
+   4) FOREGROUND TRANSITIONS (.anim)
+========================= */
+
+.anim {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  transition: transform var(--dur) var(--ease);
+}
+
+/* ✅ Enter: start ONDER beeld en beweegt omhoog naar 0 */
+.scene.is-entering .anim {
+  transform: translate3d(0, var(--enterY, 120vh), 0); /* positief = onder */
+}
+
+/* ✅ Leave: vliegt NAAR BOVEN uit beeld */
+.scene.is-leaving .anim {
+  transform: translate3d(0, var(--exitY, -120vh), 0); /* negatief = boven */
+}
+
+/* =========================
+   5) CONTENT / TYPOGRAPHY
+========================= */
+
+.wrapped-panel {
+  position: relative;
+  z-index: 4; /* FIX: altijd boven geo + mountains */
+  padding: 40px 60px;
+  max-width: 960px;
+  width: min(84vw, 960px);
+  text-align: center;
+}
+
+.wrapped-badge {
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 10px;
+}
+
+.wrapped-title {
+  font-size: clamp(72px, 12vw, 170px);
+  font-weight: 900;
+  line-height: 0.95;
+  margin-bottom: 14px;
+
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+
+  background: linear-gradient(90deg, #f8ff2d 0%, #ff9a00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.wrapped-subtitle {
+  font-size: 18px;
+  opacity: 0.85;
+  margin-top: 8px;
+}
+
+/* Optional lists on later slides */
+.wrapped-panel ul,
+.wrapped-panel ol {
+  margin: 22px auto 0;
+  width: min(560px, 85%);
+  text-align: left;
+  opacity: 0.95;
+}
+
+.wrapped-panel li {
+  margin: 10px 0;
+}
+
+.wrapped-panel span {
+  opacity: 0.7;
+}
+
+/* =========================
+   6) SLIDE 1 — GEO SHAPES
+========================= */
+
+#slide-1 {
+  position: relative; /* FIX: anchor voor absolute layers */
+  overflow: hidden;
+}
+
+/* Geo layer sits between bg and content */
+#slide-1 .geo-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2; /* FIX: boven bg, onder mountains & panel */
+  pointer-events: none;
+}
+
+.geo-shape {
+  position: absolute;
+  opacity: 0.9;
+  mix-blend-mode: screen;
+}
+
+.geo-circle {
+  border-radius: 999px;
+}
+
+.geo-rect {
+  border-radius: 999px;
+}
+
+.geo-ring {
+  border-radius: 999px;
+  border: 4px solid rgba(255, 255, 255, 0.7);
+  background: transparent;
+}
+
+/* Rectangles */
+.geo-rect-1 {
+  width: 1200px;
+  height: 80px;
+  top: 60%;
+  left: -45%;
+  transform: rotate(-134deg);
+  background: linear-gradient(90deg, #ff6fb3 0%, #ffe066 100%);
+}
+
+.geo-rect-2 {
+  width: 1200px;
+  height: 80px;
+  top: 66%;
+  left: -35%;
+  transform: rotate(-134deg);
+  background: linear-gradient(90deg, #ff6fb3 0%, #ffe066 100%);
+}
+
+.geo-rect-3 {
+  width: 1400px;
+  height: 80px;
+  top: 72%;
+  left: -30%;
+  transform: rotate(-134deg);
+  background: linear-gradient(90deg, #ff6fb3 0%, #ffe066 100%);
+}
+
+.geo-rect-4 {
+  width: 1400px;
+  height: 80px;
+  top: 78%;
+  left: -20%;
+  transform: rotate(-134deg);
+  background: linear-gradient(90deg, #ff6fb3 0%, #ffe066 100%);
+}
+
+/* Circles */
+.geo-circle-1 {
+  width: 520px;
+  height: 120px;
+  top: 24%;
+  left: 6%;
+  background: radial-gradient(
+    circle,
+    #ffe066 0%,
+    #ff9a00 60%,
+    transparent 100%
+  );
+}
+
+.geo-circle-2 {
+  width: 1060px;
+  height: 1060px;
+  bottom: -240px;
+  right: -10%;
+  background: radial-gradient(
+    circle,
+    #36f3c0 0%,
+    #4aa8ff 55%,
+    transparent 100%
+  );
+}
+
+/* Rings (static rings) */
+.geo-ring-2 {
+  width: 820px;
+  height: 820px;
+  top: 2%;
+  right: 8%;
+}
+
+.geo-ring-3 {
+  width: 520px;
+  height: 520px;
+  top: 1%;
+  right: 55%;
+  border: 40px solid rgba(103, 53, 53, 0.7);
+}
+
+/* =========================
+   7) SLIDE 1 — ORBIT RING
+========================= */
+
+.orbit {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  top: 5%;
+  right: 20%;
+
+  animation: ringOrbit 6s linear infinite;
+}
+
+/* ring on the orbit path */
+.orbit .geo-ring-1 {
+  width: 300px;
+  height: 300px;
+  border: 4px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@keyframes ringOrbit {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================
+   8) SLIDE 1 — MOUNTAINS (INFINITE BELT)
+========================= */
+
+/* =========================
+   SLIDE 1 — MOUNTAINS (NO BACKPLATE)
+========================= */
+
+#slide-1 .mountain-wrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 30vh;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+
+  background: none !important;
+}
+
+/* KILL de grondlaag volledig (als je 'm eerder had) */
+#slide-1 .mountain-wrap::before {
+  content: none !important;
+}
+
+#slide-1 .mountain-belt {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 100%;
+  width: 200vw;
+  display: flex;
+  animation: mountainScroll 20s linear infinite;
+
+  background: none !important;
+}
+
+#slide-1 .mountain-strip {
+  flex: 0 0 100vw;
+  height: 100%;
+
+  background: linear-gradient(135deg, #05070f 0%, #181c36 40%, #02030a 100%);
+  clip-path: polygon(
+    0% 100%,
+    10% 35%,
+    20% 100%,
+    30% 35%,
+    40% 100%,
+    50% 35%,
+    60% 100%,
+    70% 35%,
+    80% 100%,
+    90% 35%,
+    100% 100%
+  );
+}
+
+@keyframes mountainScroll {
+  0% {
+    transform: translateX(-100vw);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* =========================
+   9) SLIDE BACKGROUNDS
+========================= */
+
+#slide-1 .wrapped-bg {
+  background: radial-gradient(circle at 5% 15%, #36f3c0 0, transparent 45%),
+    radial-gradient(circle at 95% 20%, #ffb347 0, transparent 45%),
+    radial-gradient(circle at 20% 90%, #4aa8ff 0, transparent 45%),
+    radial-gradient(circle at 80% 80%, #c63bff 0, transparent 45%);
+}
+
+#slide-2 .wrapped-bg {
+  background: radial-gradient(circle at 0% 30%, #ff6fb3 0, transparent 45%),
+    radial-gradient(circle at 80% 0%, #ffe066 0, transparent 45%),
+    radial-gradient(circle at 20% 100%, #3ed3ff 0, transparent 45%),
+    radial-gradient(circle at 100% 80%, #9b5bff 0, transparent 45%);
+}
+
+#slide-3 .wrapped-bg {
+  background: radial-gradient(circle at 10% 10%, #45ffbe 0, transparent 45%),
+    radial-gradient(circle at 90% 10%, #8bff7a 0, transparent 45%),
+    radial-gradient(circle at 0% 80%, #2f9bff 0, transparent 45%),
+    radial-gradient(circle at 90% 90%, #ff7fd1 0, transparent 45%);
+}
+
+#slide-4 .wrapped-bg {
+  background: radial-gradient(circle at 0% 20%, #3ad2ff 0, transparent 45%),
+    radial-gradient(circle at 100% 30%, #5e5bff 0, transparent 45%),
+    radial-gradient(circle at 20% 100%, #15192f 0, transparent 60%),
+    radial-gradient(circle at 75% 90%, #ff8a63 0, transparent 45%);
+}
+
+#slide-5 .wrapped-bg {
+  background: radial-gradient(circle at 10% 10%, #ffb347 0, transparent 45%),
+    radial-gradient(circle at 90% 0%, #ff6f61 0, transparent 45%),
+    radial-gradient(circle at 0% 100%, #36f3c0 0, transparent 45%),
+    radial-gradient(circle at 90% 90%, #4aa8ff 0, transparent 45%);
+}
+
+#slide-6 .wrapped-bg {
+  background: radial-gradient(circle at 5% 20%, #d4ff3a 0, transparent 45%),
+    radial-gradient(circle at 95% 15%, #36f3c0 0, transparent 45%),
+    radial-gradient(circle at 15% 90%, #3ed3ff 0, transparent 45%),
+    radial-gradient(circle at 85% 85%, #b235ff 0, transparent 45%);
+}
+
+#slide-7 .wrapped-bg {
+  background: radial-gradient(circle at 0% 15%, #9bf6ff 0, transparent 45%),
+    radial-gradient(circle at 100% 10%, #ffd6a5 0, transparent 45%),
+    radial-gradient(circle at 20% 90%, #bdb2ff 0, transparent 45%),
+    radial-gradient(circle at 85% 85%, #ffadf0 0, transparent 45%);
+}
+
+#slide-8 .wrapped-bg {
+  background: radial-gradient(circle at 5% 5%, #36f3c0 0, transparent 45%),
+    radial-gradient(circle at 95% 5%, #ffe066 0, transparent 45%),
+    radial-gradient(circle at 10% 100%, #ff6fb3 0, transparent 45%),
+    radial-gradient(circle at 100% 95%, #4aa8ff 0, transparent 45%);
+}
+
+#slide-9 .wrapped-bg {
+  background: radial-gradient(circle at 0% 20%, #203a8f 0, transparent 55%),
+    radial-gradient(circle at 100% 20%, #f9c74f 0, transparent 50%),
+    radial-gradient(circle at 0% 100%, #277da1 0, transparent 50%),
+    radial-gradient(circle at 95% 90%, #f9844a 0, transparent 50%);
+}
+
+#slide-10 .wrapped-bg {
+  background: radial-gradient(circle at 10% 10%, #ffe066 0, transparent 45%),
+    radial-gradient(circle at 90% 0%, #ffbe0b 0, transparent 45%),
+    radial-gradient(circle at 0% 90%, #3a0ca3 0, transparent 50%),
+    radial-gradient(circle at 100% 80%, #7209b7 0, transparent 50%);
+}
+
+#slide-11 .wrapped-bg {
+  background: radial-gradient(circle at 0% 10%, #36f3c0 0, transparent 45%),
+    radial-gradient(circle at 100% 15%, #ff6fb3 0, transparent 45%),
+    radial-gradient(circle at 10% 100%, #4aa8ff 0, transparent 45%),
+    radial-gradient(circle at 90% 90%, #ffe066 0, transparent 45%);
+}
+
+/* =========================
+   10) RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+  .wrapped-panel {
+    padding: 24px 20px;
+    width: min(90vw, 960px);
+  }
+
+  .wrapped-title {
+    font-size: clamp(54px, 12vw, 120px);
+  }
+
+  .wrapped-subtitle {
+    font-size: 16px;
+  }
+}
+
+/* =========================================================
+   SLIDE 2 — GEO VARIANT (SQUARES / TILES / CIRCLES)
+   - zelfde look, andere verdeling en vormen
+========================================================= */
+
+#slide-2 {
+  overflow: hidden;
+}
+
+/* optioneel: net iets andere blend voor slide 2 */
+#slide-2 .geo-layer--s2 .geo-shape {
+  opacity: 0.92;
+  mix-blend-mode: screen;
+}
+
+/* ---------- Circles (anders gepositioneerd dan slide 1) ---------- */
+
+#slide-2 .s2-circle {
+  border-radius: 999px;
+}
+
+#slide-2 .s2-circle-1 {
+  width: 520px;
+  height: 520px;
+  top: -120px;
+  left: -120px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 224, 102, 0.95) 0%,
+    rgba(255, 111, 179, 0.55) 55%,
+    transparent 72%
+  );
+}
+
+#slide-2 .s2-circle-2 {
+  width: 980px;
+  height: 980px;
+  bottom: -380px;
+  right: -260px;
+  background: radial-gradient(
+    circle,
+    rgba(62, 211, 255, 0.85) 0%,
+    rgba(155, 91, 255, 0.55) 55%,
+    transparent 73%
+  );
+}
+
+/* ---------- Squares / tiles (één vorm per element, met gradient) ---------- */
+
+#slide-2 .s2-square {
+  border-radius: 32px;
+  filter: blur(0px);
+}
+
+#slide-2 .s2-square-1 {
+  width: 240px;
+  height: 240px;
+  top: 18%;
+  right: 14%;
+  transform: rotate(12deg);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 111, 179, 0.95),
+    rgba(255, 224, 102, 0.9)
+  );
+}
+
+#slide-2 .s2-square-2 {
+  width: 180px;
+  height: 180px;
+  top: 52%;
+  left: 12%;
+  transform: rotate(-18deg);
+  background: linear-gradient(
+    135deg,
+    rgba(54, 243, 192, 0.9),
+    rgba(62, 211, 255, 0.9)
+  );
+}
+
+#slide-2 .s2-square-3 {
+  width: 120px;
+  height: 120px;
+  bottom: 18%;
+  right: 38%;
+  transform: rotate(22deg);
+  background: linear-gradient(
+    135deg,
+    rgba(155, 91, 255, 0.95),
+    rgba(255, 224, 102, 0.85)
+  );
+}
+
+/* ---------- Pills (andere richting, minder “schuine balken” vibe) ---------- */
+
+#slide-2 .s2-pill {
+  border-radius: 999px;
+  height: 64px;
+}
+
+#slide-2 .s2-pill-1 {
+  width: 980px;
+  top: 68%;
+  left: -20%;
+  transform: rotate(8deg);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 111, 179, 0.95),
+    rgba(255, 154, 0, 0.9)
+  );
+}
+
+#slide-2 .s2-pill-2 {
+  width: 820px;
+  top: 26%;
+  left: -12%;
+  transform: rotate(-10deg);
+  background: linear-gradient(
+    90deg,
+    rgba(62, 211, 255, 0.9),
+    rgba(155, 91, 255, 0.9)
+  );
+}
+
+/* ---------- Ring cluster (kleiner, compacter dan slide 1) ---------- */
+
+#slide-2 .s2-ring {
+  border: 4px solid rgba(255, 255, 255, 0.65);
+}
+
+#slide-2 .s2-ring-1 {
+  width: 360px;
+  height: 360px;
+  top: 12%;
+  left: 46%;
+  transform: translateX(-50%);
+}
+
+#slide-2 .s2-ring-2 {
+  width: 520px;
+  height: 520px;
+  top: 6%;
+  left: 46%;
+  transform: translateX(-50%);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* ---------- Dot accent (1 shape, voelt als “puntjes”) ---------- */
+
+#slide-2 .s2-dot {
+  width: 220px;
+  height: 220px;
+  border-radius: 999px;
+  bottom: 10%;
+  left: 46%;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 224, 102, 0.95) 0%,
+    rgba(255, 154, 0, 0.6) 38%,
+    transparent 68%
+  );
+  filter: blur(1px);
+}
