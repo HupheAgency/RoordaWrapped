@@ -4,8 +4,14 @@ let currentScene = scenes.findIndex((s) => s.classList.contains("active"));
 if (currentScene < 0) currentScene = 0;
 
 let isTransitioning = false;
+let lastInputAt = 0;
+let resizeTimer;
 
-const DURATION = 2000; // moet matchen met --dur
+const INPUT_THROTTLE_MS = 300;
+const RESIZE_DEBOUNCE_MS = 150;
+
+let DURATION = 2000; // moet matchen met --dur
+const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 function setExitDistances(scene) {
   scene.querySelectorAll(".anim").forEach((el) => {
@@ -48,6 +54,49 @@ function clearEnterDistances(scene) {
   scene.querySelectorAll(".anim").forEach((el) => {
     el.style.removeProperty("--enterY");
   });
+}
+
+function resetSceneCustomProps(scene) {
+  clearEnterDistances(scene);
+  clearExitDistances(scene);
+}
+
+function refreshActiveSceneMetrics() {
+  if (isTransitioning) return;
+
+  const activeScene = scenes[currentScene];
+  if (!activeScene) return;
+
+  // reset alles zodat we vanaf schone props meten
+  scenes.forEach(resetSceneCustomProps);
+
+  setExitDistances(activeScene);
+
+  const total = scenes.length;
+  const nextScene = scenes[(currentScene + 1) % total];
+  const prevScene = scenes[(currentScene - 1 + total) % total];
+
+  if (nextScene && nextScene !== activeScene) {
+    setEnterDistances(activeScene, nextScene);
+  }
+  if (prevScene && prevScene !== activeScene && prevScene !== nextScene) {
+    setEnterDistances(activeScene, prevScene);
+  }
+}
+
+function shouldHandleInput() {
+  if (isTransitioning) return false;
+
+  const now = Date.now();
+  if (now - lastInputAt < INPUT_THROTTLE_MS) return false;
+
+  lastInputAt = now;
+  return true;
+}
+
+function stepScene(delta) {
+  if (!shouldHandleInput()) return;
+  goToScene(currentScene + delta);
 }
 
 function goToScene(nextIndex) {
@@ -93,19 +142,95 @@ function goToScene(nextIndex) {
   }, DURATION);
 }
 
+function applyMotionPreference(e) {
+  const reduce = e?.matches ?? motionQuery.matches;
+  DURATION = reduce ? 0 : 2000;
+  document.documentElement.style.setProperty("--dur", `${DURATION}ms`);
+}
+
+applyMotionPreference(motionQuery);
+motionQuery.addEventListener("change", applyMotionPreference);
+
 // keyboard
 document.addEventListener("keydown", (e) => {
+  if (isTransitioning) return;
+
   if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === " ") {
     e.preventDefault();
-    goToScene(currentScene + 1);
+    stepScene(1);
   }
   if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
     e.preventDefault();
-    goToScene(currentScene - 1);
+    stepScene(-1);
   }
 });
 
 // click
-document.addEventListener("click", () => {
-  goToScene(currentScene + 1);
+const deck = document.getElementById("deck");
+function isInteractiveTarget(target) {
+  const interactiveTags = ["A", "BUTTON", "INPUT", "SELECT", "TEXTAREA", "OPTION", "LABEL"];
+  return (
+    interactiveTags.includes(target.tagName) ||
+    target.closest(".wrapped-panel") ||
+    target.closest("[contenteditable='true']")
+  );
+}
+
+deck?.addEventListener("click", (e) => {
+  const target = e.target;
+  if (!(target instanceof Element)) return;
+  if (isInteractiveTarget(target)) return;
+  stepScene(1);
+});
+
+// touch
+let touchStart = null;
+
+document.addEventListener("touchstart", (e) => {
+  if (e.touches.length !== 1) return;
+  const t = e.touches[0];
+  touchStart = { x: t.clientX, y: t.clientY };
+});
+
+document.addEventListener(
+  "touchend",
+  (e) => {
+    if (!touchStart || e.changedTouches.length === 0) return;
+
+    const t = e.changedTouches[0];
+    const deltaX = t.clientX - touchStart.x;
+    const deltaY = t.clientY - touchStart.y;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    touchStart = null;
+
+    const TAP_THRESHOLD = 10;
+    const SWIPE_THRESHOLD = 30;
+
+    const isTap = absX <= TAP_THRESHOLD && absY <= TAP_THRESHOLD;
+    if (isTap) {
+      stepScene(1);
+      return;
+    }
+
+    const isHorizontal = absX > absY && absX > SWIPE_THRESHOLD;
+    if (!isHorizontal) return;
+
+    e.preventDefault();
+    if (deltaX < 0) {
+      stepScene(1);
+    } else {
+      stepScene(-1);
+    }
+  },
+  { passive: false }
+);
+
+// resize (debounced)
+window.addEventListener("resize", () => {
+  if (resizeTimer) window.clearTimeout(resizeTimer);
+  resizeTimer = window.setTimeout(() => {
+    refreshActiveSceneMetrics();
+  }, RESIZE_DEBOUNCE_MS);
 });
